@@ -4,7 +4,15 @@ import pickle
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 import warnings
+import requests
+import os
 warnings.filterwarnings('ignore')
+
+def download_model():
+    url = "https://drive.google.com/file/d/1Vq-D0UsRoj6K333_5T57QYvjSg3AofBB/view?usp=share_link"  # <-- Replace with your actual model file URL
+    r = requests.get(url)
+    with open("flight_model.pkl", "wb") as f:
+        f.write(r.content)
 
 # Page configuration
 st.set_page_config(
@@ -20,14 +28,18 @@ st.markdown("Predict flight prices based on various factors like airline, route,
 # Load the trained model
 @st.cache_resource
 def load_model():
+    if not os.path.exists('flight_model.pkl'):
+        st.info("⬇️ Downloading model file...")
+        download_model()
     try:
         # Try to load a saved model first
         with open('flight_model.pkl', 'rb') as f:
             model = pickle.load(f)
         return model, True
-    except:
-        # If no saved model, return None
+    except Exception as e:
+        st.error(f"Error loading model: {str(e)}")
         return None, False
+            
 
 # Load model
 model, model_loaded = load_model()
