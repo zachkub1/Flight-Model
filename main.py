@@ -13,6 +13,10 @@ df['duration'].min()
 df['duration'].max()
 df['duration'].median()
 
+print("=== DATA EXPLORATION COMPLETE ===")
+print("Explored airline distribution, city patterns, time distributions, and duration statistics")
+print("Starting preprocessing")
+
 
 #preprocessing
 df = df.drop('Unnamed: 0', axis=1)
@@ -25,6 +29,10 @@ df = df.join(pd.get_dummies(df.source_city, prefix='source_city')).drop('source_
 df = df.join(pd.get_dummies(df.destination_city, prefix='destination_city')).drop('destination_city', axis=1)
 df = df.join(pd.get_dummies(df.arrival_time, prefix='arrival')).drop('arrival_time', axis=1)
 df = df.join(pd.get_dummies(df.departure_time, prefix='departure')).drop('departure_time', axis=1)
+
+print("=== DATA PREPROCESSING COMPLETE ===")
+print("Removed unnecessary columns, encoded categorical variables, and created dummy variables for ML")
+print("Starting to train model")
 
 #training 
 from sklearn.ensemble import RandomForestRegressor
@@ -48,6 +56,10 @@ print('MAE', mean_absolute_error(y_test, y_pred))
 print('MSE', mean_squared_error(y_test, y_pred))
 print('RMSE', math.sqrt(mean_squared_error(y_test, y_pred)))
 
+print("=== INITIAL MODEL TRAINING COMPLETE ===")
+print("Trained baseline Random Forest model and evaluated performance metrics")
+print("Starting Model Evaluation")
+
 
 #Evaluation
 import matplotlib.pyplot as plt
@@ -64,16 +76,20 @@ sorted_importances
 plt.figure(figsize=(10,6))
 plt.bar([x[0] for x in sorted_importances[:5]], [x[1] for x in sorted_importances[:5]])
 
+print("=== MODEL EVALUATION COMPLETE ===")
+print("Created scatter plot of predictions vs actual values and feature importance visualization")
+print("Starting Fine Tuning")
+
 #fine tuning
 
 from sklearn.model_selection import GridSearchCV
-''''
+'''
 param_grid = {
     'n_estimators' : [100, 200, 300],
     'max_depth': [None, 10,20, 30],
     'min_samples_split' : [2, 5,10],
     'min_samples_leaf' : [1,2,4],
-    'max_features' : ['auto', 'sqrt']
+    'max_features' : ['sqrt', 'log2']  # Fixed: removed 'auto' as it's not valid
 }
 
 grid_search = GridSearchCV(reg, param_grid, cv = 5)
@@ -89,10 +105,10 @@ param_dist = {
     'max_depth': [None, 10,20, 30, 40, 50],
     'min_samples_split' : randint(2,11),
     'min_samples_leaf' : randint(1,5),
-    'max_features' : [1.0, 'auto', 'sqrt']
+    'max_features' : [1.0, 'sqrt', 'log2']  # Fixed: removed 'auto' as it's not valid
 }
 
-reg = RandomForestRegressor(n_estimators=-1)
+reg = RandomForestRegressor(n_estimators=100)  # Fixed: n_estimators cannot be -1
 random_search = RandomizedSearchCV(estimator= reg, param_distributions= param_dist, n_iter = 2, cv = 3,
 scoring = 'neg_mean_squared_error', verbose = 2, random_state =10, n_jobs =-1)
 
@@ -103,4 +119,32 @@ best_regressor.score(x_test, y_test)
 
 y_pred = best_regressor.predict(x_test)
 
-best_regressor.predict()
+# Fixed: predict() requires X argument
+print("Best regressor predictions:")
+print(best_regressor.predict(x_test)[:10])  # Show first 10 predictions
+
+# Show the best parameters found
+print("\nBest parameters found:")
+print(random_search.best_params_)
+
+# Show the best score
+print(f"\nBest cross-validation score: {random_search.best_score_:.4f}")
+
+# Make predictions on test set and evaluate
+y_pred_best = best_regressor.predict(x_test)
+print(f"\nBest model performance on test set:")
+print(f'R2: {r2_score(y_test, y_pred_best):.4f}')
+print(f'MAE: {mean_absolute_error(y_test, y_pred_best):.4f}')
+print(f'MSE: {mean_squared_error(y_test, y_pred_best):.4f}')
+print(f'RMSE: {math.sqrt(mean_squared_error(y_test, y_pred_best)):.4f}')
+
+# Save the best model for web deployment
+import pickle
+with open('flight_model.pkl', 'wb') as f:
+    pickle.dump(best_regressor, f)
+print("\nModel saved as 'flight_model.pkl' for web deployment")
+
+print("=== HYPERPARAMETER TUNING COMPLETE ===")
+print("Completed RandomizedSearchCV optimization and evaluated best model performance")
+print("=== ALL PROCESSES COMPLETED SUCCESSFULLY ===")
+
